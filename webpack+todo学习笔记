@@ -1,0 +1,226 @@
+webpack+vue+webpack-dev-server配置
+
+*	内容：前端工程概念、webpack工具、vue
+
+*	搭建前端工程
+
+	1、初始化项目	npm init
+	2、npm i webpack vue vue-loader
+	3、按照提示安装对应的插件
+	4、创建webpack.config.js
+		cinst path=require('path')
+		module.exports={
+
+		}
+
+		问题：运行npm run build 的时候，提示我安装脚手架工具  需要将webpack版本降下来
+		问题：ERROR in ./src/app.vue?vue&type=style&index=0&lang=css样式不能识别
+			解决办法：使用vie-style-loader代替style-loader
+				rules: [
+				{test: /\.vue$/,loader: "vue-loader"},
+				{test: /\.css$/,use: ["vue-style-loader", "css-loader"]  }
+				]	
+
+		 npm i style-loader url-loader file-loader
+		 npm i stylus-loader stylus 安装stylus-loader时需要同时安装stylus模块
+
+
+		webpack-dev-server :提供高效且方便的开发模式	
+
+			package.json 中scripts 增加"dev": "webpack-dev-server --config webpack.config.js"
+			webpack.config.js 
+				1、中增加配置项 target:'web'
+				2、定义const isDev=process.env.NODE_ENV==='development'
+				3、判断isDev 增加config.devServer={
+					port:'8001',
+					host:'0.0.0.0',		//可以局域网和localhost访问
+					overlay:{
+						errors:true
+					},
+					open:true,
+					host:true			//界面热加载	
+				}
+				config.plugins.push(
+					new webpack.HostModuleReplacementPlugin(),		//热加载组件
+					new webpack.NoEmitOnErrorPlugin()				//错误情况不提交
+				)
+				4、增加config.envtool='#cheap-module-eval-source-map' 	//与源文件进行映射
+
+		 npm i webpack-dev-server	//适用于开发模式
+		 npm i cross-env			//运行命令时设置环境变量   区分不同的运行平台
+		 npm i html-webpack-plugin	//组件	加载html
+
+		path.join()	简单讲路径进行拼接
+		path.resolve()	将以'/'+开始的路径 作为根目录，在此之前的路径会被丢弃  类似cd命令
+						总是返回一个相对当前工作目录的绝对路径
+
+
+vue2相关
+	数据绑定	双向绑定
+	vue文件的开发方式	组件化开发框架	vue2可以自定义标签
+	render方法	组件数据变化 会重新生成新的html	虚拟dom的方式
+				通过createElement()创建结构树
+	
+	API重点
+		生命周期方法
+		computed 计算属性	
+
+
+	npm i postcss-loader autoprefixer babel-loader babel-core
+
+	创建 .babelrc 				//vue中解析编译jsx文件	需要在webpack.config.js文件中增加对应的配置项
+								{
+									test:/\.jsx$/,
+									use:'babel-loader'
+								}
+		postcss.config.js		//自动处理css样式文件中前缀 需要在webpack.config.js中配置	
+
+		数据在什么地方申明就在什么地方做操作
+
+
+	正式环境打包的优化
+
+	css文件单独打包
+		npm i extract-text-webpack-plugin
+
+	单独打包类库文件
+		更长时间利用浏览器的缓冲功能	
+
+
+	网络优化
+	API定制
+	nodejs层
+
+
+
+*	技巧：ctrl+` 直接打开命令行
+
+
+
+vue实例中属性和作用
+
+	const app=new Vue({
+
+	})
+
+	app.$data				//组件中的data
+	app.$props				//组件中传递的属性
+	app.$el					//
+	app.$options			//表示整个实例
+	app.$options.render()
+	app.$root==app			
+	app.$children
+	app.$slots				//插槽
+	app.$scopedSlots		
+	app.$refs				//快速定位组件或html节点
+	app.$isServer
+	const unWatch=app.$watch('text',(newVal,oldVal)=>{
+
+	})						//通常写在组件中	否则会内存溢出
+	unWatch()				//主动注销watch方法
+	app.$on('test',(args)=>{
+
+	})
+	app.$emit('test',args)		//触发test事件
+	app.$once('onveEvent',()=>{
+
+	})
+	app.$forceUpdate()			//使界面强制进行变化	不建议使用
+	app.$set(app.obj,'a',1)		//设置对应的数据
+	app.$delete					//删除数据属性
+	app.$nextTick([callback])	//dom下次更新之后执行对应的方法
+	app.$destroy()				//销毁
+
+
+Vue生命周期 == vue对象的生命周期
+	beforeCreate(){}			//
+	created(){}					//不能做dom操作 因为dom创建没有完成
+	beforeMount(){}				//		dom渲染完成  指定render 方法 服务端渲染时不会执行
+	mounted(){}					//组件渲染完成 服务端渲染时不会执行
+	beforeUpdate(){}			//数据改变是触发
+	updated(){}					//数据更改后渲染完成
+	activated(){}
+	deactivated(){}
+	beforeDestroy(){}			//使用app.$destroy()时触发
+	destroyed(){}
+	render(h){}					//解析template 在beforeMount和mounted之间执行
+	renderError(){}				//开发环境中会被调用 本组件错误时会被调用 将错误信息渲染在界面上	提示错误信息
+	errorCaptured(){}			//错误信息会向上冒泡	且可以在正式环境中使用
+
+
+Vue的数据绑定
+	{{data}}						//基础的数据绑定
+	{{isTrue?'真':'假'}}			 //二元运算
+	{{['2','3'.join(',')]}}			//简单运算
+	v-html 直接绑定html代码
+	v-bind	绑定数据 	可简写为‘:’
+	v-on	绑定时间	可简写为‘@’
+	v-model 双向绑定
+	class绑定
+		:class="{active:[boolean]}"							//根据后边传入的属性判断是否要增加对应的样式类型
+		:class="[[boolean]?'trueClass':'falseClass']"		//二元运算
+		:class="[{trueClass:[boolean]}]"					//
+		也可以直接在data中定义样式   然后通过v-bind的方式绑定
+		:style="[style1,style2,...]"						//数组方式
+
+Vue computed和watch	计算属性和侦听器
+	对于复杂的数据处理  需要用到计算属性 当涉及到的数据不发生变化时   方法不会被调用
+	watch监听数据变化  适合场景为在数据变化的时候做相应的操作  watch程序启动后不会被触发   数据变化时才会被触发
+	watch启动后触发的写法
+	watch:{
+		firstName:{
+			handler(newName,oldName){
+				....
+			},
+			immediate:true,		//表示被立即触发
+			deep:true			//当监听对象时  
+								//如果该设置项为false   则对象中属性变化不会触发   true时  则会针对对象做深度侦听(会增加开销)
+								//也可以直接写对象+属性进行监听（如：person.name）
+		}
+	}
+	主要场景为监听到某个值变化  做操作
+
+Vue的原生指令（v-xxxx）
+	v-bind
+	v-text	直接绑定内容		（innerText）
+	v-html	绑定的内容先用html解析   后显示		作为Html插入（innerHtml）
+	v-if	条件不成立使  对应节点不会出现在dom流中
+	v-else
+	v-else-if
+
+	v-show	通过display属性控制节点的显示隐藏
+	v-for	v-for="(item,index) in array"			循环数组
+			v-for="(val,key,index) in object"		对象也可以进行遍历
+			注：使用v-for通常要加:key	避免重复赋值	循环列表中项的唯一标识  如果key存在  则不重新生成	‘就地复用’策略
+	
+	v-on	document.on()	document.addEventListener()
+	v-model	双向绑定	通常使用在input控件上
+			绑定一个数据列表 input[type='checkbox']
+			data(){
+				return {
+					arr:[1,2,3],
+					picked:''
+				}
+			}
+
+			<input type="checkbox" :value="1" v-model='arr'/>
+			<input type="checkbox" :value="2" v-model='arr'/>
+			<input type="checkbox" :value="3" v-model='arr'/>
+
+			对应的checkbox选中后  数组arr会发生改变
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
